@@ -11,6 +11,7 @@ class ListenChannel final : public Channel
 public:
 	ListenChannel(TcpServer *server);
 	void handle_read() override;
+
 private:
 	TcpServer *server_;
 };

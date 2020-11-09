@@ -10,4 +10,19 @@ public:
 	void unlock(){ locking_.clear(); }
 private:
 	std::atomic_flag locking_;
-}
+};
+
+class SpinLockGuard
+{
+public:
+	SpinLockGuard(SpinLock &lock) : lock_(lock)
+	{
+		lock_.lock();
+	}
+	~SpinLockGuard()
+	{
+		lock_.unlock();
+	}
+private:
+	SpinLock &lock_;
+};

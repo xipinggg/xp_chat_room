@@ -6,7 +6,6 @@ struct User
     int id;
     std::string name;
     int fd;
-    
 };
 
 #endif // ! _USER_H

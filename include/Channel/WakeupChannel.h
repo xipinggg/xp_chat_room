@@ -4,7 +4,7 @@
 #include "Channel.h"
 
 class WakeupChannel final : public Channel
-{   
+{
 public:
 	WakeupChannel(int fd = FD);
 	void handle_read() override;

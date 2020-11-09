@@ -14,8 +14,9 @@ public:
 	void handle_write() override;
 	void handle_close() override;
 	void handle_error() override;
+
 private:
-	TcpConnection* conn_;
+	TcpConnection *conn_;
 };
 
 #endif

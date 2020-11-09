@@ -8,16 +8,17 @@ struct epoll_event;
 class Channel;
 
 class Epoller
-{ 
+{
 public:
     Epoller();
     virtual ~Epoller();
-    int epoll(std::vector<Channel*> &active_channels);
-    void update_channel(Channel *channel);
-    void fill_active_channels(int num_events, std::vector<Channel*> &active_channels);
+    int epoll(std::vector<Channel *> &active_channels);
+    int update_channel(Channel *channel);
+    void fill_active_channels(int num_events, std::vector<Channel *> &active_channels);
     int epollfd() const { return epollfd_; }
+
 private:
-    std::map<int, Channel*> channels_;
+    std::map<int, Channel *> channels_;
     std::vector<struct epoll_event> events_;
     int epollfd_;
 };

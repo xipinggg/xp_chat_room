@@ -7,8 +7,12 @@
 class ListenSocket
 {
 public:
-	enum Init:int{PORT = 8888,BACKLOG = 21};
-	
+	enum Init : int
+	{
+		PORT = 8888,
+		BACKLOG = 21
+	};
+
 	ListenSocket(int port = PORT);
 	~ListenSocket();
 	int bind();

@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+message msg
+{
+    int32 type = 1;
+    int32 id = 2;
+    string name = 3;
+    int32 time = 4;
+    optional string text = 5;
+}

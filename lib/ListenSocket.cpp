@@ -9,12 +9,12 @@
 using namespace std;
 
 ListenSocket::ListenSocket(int port)
-	:port_(port),
-	fd_(::socket(AF_INET,SOCK_STREAM,IPPROTO_TCP)),
-	addr_()
+	: port_(port),
+	  fd_(::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)),
+	  addr_()
 {
 	debug();
-	
+
 	assert(fd_ >= 0);
 }
 
@@ -29,7 +29,7 @@ int ListenSocket::listen(int backlog)
 {
 	debug();
 
-	int ret = ::listen(fd_,backlog);
+	int ret = ::listen(fd_, backlog);
 	return ret;
 }
 
@@ -37,12 +37,12 @@ int ListenSocket::bind()
 {
 	debug();
 
-	bzero(&addr_,sizeof(struct sockaddr_in));
+	bzero(&addr_, sizeof(struct sockaddr_in));
 	addr_.sin_family = AF_INET;
 	addr_.sin_port = htons(port_);
 	addr_.sin_addr.s_addr = htonl(INADDR_ANY);
 
-	int ret = ::bind(fd_,(struct sockaddr *)&addr_,sizeof(addr_));
+	int ret = ::bind(fd_, (struct sockaddr *)&addr_, sizeof(addr_));
 
 	assert(ret >= 0);
 	return ret;
