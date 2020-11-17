@@ -25,7 +25,7 @@ void ListenChannel::handle_read()
 	//cout<<"connfd:  "<<connfd<<endl;
 	if(conn_fd > 0)
 	{
-		server_->on_new_connection(conn_fd,peer_addr);
+		server_->on_connect(conn_fd,peer_addr);
 	}
 	else
 	{

@@ -29,7 +29,7 @@ void Buffer::add_msg(Message msg)
 
 ssize_t Buffer::write_to_fd(int fd)
 {
-    auto &msg = front_msg();
+    auto &msg = front_msg_();
     const size_t str_size = msg.str_size();
     char *buf = msg.data();
     ssize_t result = ::send(fd, buf, str_size, 0);
@@ -53,10 +53,15 @@ Message Buffer::msg()
     --msg_num_;
     return msg;
 }
+ssize_t Buffer::read_from_fd(int fd)
+{
+    int num = back_msg_().str_size();
+    return read_from_fd(fd, num);
+}
 
 ssize_t Buffer::read_from_fd(int fd, int num)
 {
-    auto &msg = back_msg();
+    auto &msg = back_msg_();
     char *buf = msg.data();
     auto result = ::recv(fd, buf, num, 0);
     if (result > 0)

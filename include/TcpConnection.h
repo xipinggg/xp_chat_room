@@ -27,13 +27,12 @@ public:
 	virtual void handle_write();
 	virtual void handle_close();
 	virtual void handle_error();
+	bool add_msg(Message msg);
 	//set and get
 	int fd() const { return fd_; }
-	void set_fd(sockaddr_in addr) { addr_ = addr; }
 	sockaddr_in addr() const { return addr_; }
-	Channel *channel() const { return (Channel *)conn_channel_.get(); }
+	Channel *channel() const { return conn_channel_.get(); }
 	std::weak_ptr<ConnChannel> weak_channel() const { return conn_channel_; }
-	bool set_nonblock_fd();
 	bool connecting() const { return connecting_; }
 	void set_connecting(bool status) { connecting_ = status; }
 	void reset();
@@ -41,7 +40,11 @@ public:
 	void init_conn_channel();
 
 protected:
-	bool msg_head_complete() { return num_need_read_ == lenth::MSG_HEAD; }
+	bool is_get_msg_head() { return current_msg_.left >= lenth::MSG_HEAD; }
+	int get_msg_head();
+	void add_new_msg_to_buffer();
+	bool is_msg_complete() { return current_msg_.left + 1 == current_msg_.right; }
+	void on_msg_complete();
 
 protected:
 	int fd_;
@@ -52,8 +55,8 @@ protected:
 	std::shared_ptr<ConnChannel> conn_channel_;
 	TcpServer *server_;
 	EventLoop *loop_;
-	array<char, lenth::MSG_HEAD> msg_head_;
-	int num_need_read_;
+	char msg_head_[lenth::MSG_HEAD + 1];//20-11-10 TODO char [4]
 	Message current_msg_;
+	bool is_read_msg_head_;
 };
 #endif

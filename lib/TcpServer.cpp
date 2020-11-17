@@ -11,26 +11,28 @@
 #include "Types.h"
 
 using namespace std;
-using namespace std::placeholders;
+//using namespace std::ranges;
+//using namespace std::placeholders;
 
-TcpServer::TcpServer(int ioThreadCount)
-	: io_thread_count_(ioThreadCount),
+TcpServer::TcpServer(int io_thread_count)
+	: io_thread_count_(io_thread_count),
 	  loops_index_(0),
 	  socket_(),
 	  listen_channel_(new ListenChannel(this)),
-	  loops_(1 + ioThreadCount),
+	  loops_(1 + io_thread_count),
 	  connections_(),
 	  conn_pool_(),
 	  conn_pool_mutex_()
 {
 	debug();
 
-	loops_[0] = make_shared<EventLoop>(0, "listenLoop");
+	loops_[LISTEN_LOOP_ID] = make_shared<EventLoop>(LISTEN_LOOP_ID, "listen_loop");
+	listen_loop_ = loops_[LISTEN_LOOP_ID];
 
-	int index = 1;
+	int index = 1 + LISTEN_LOOP_ID;
 	while (index <= io_thread_count_)
 	{
-		loops_[index] = make_shared<EventLoop>(index, "ioLoop");
+		loops_[index] = make_shared<EventLoop>(index, "io_loop");
 		++index;
 	}
 }
@@ -44,54 +46,65 @@ void TcpServer::start()
 {
 	debug();
 
-	auto channel = listen_channel_.get();
-
-	auto listenLoop = loops_[0];
-	listenLoop->update_channel(channel, listenLoop->id());
-
-	for (int i = 1; i < loops_.size(); ++i)
+	Channel *channel = listen_channel_.get();
+	listen_loop_->update_channel(channel, listen_loop_->id());
+	for (int i = 1 + LISTEN_LOOP_ID; i < loops_.size(); ++i)
 	{
 		thread t(&EventLoop::loop, loops_[i].get());
 		t.detach();
 	}
+	listen_loop_->loop();
+}
 
-	listenLoop->loop();
+void TcpServer::on_connect(int fd, sockaddr_in addr)
+{
+	debug();
+
+	set_nonblock_fd(fd);
+	EventLoop *loop = select_loop(fd);
+	auto conn = conn_pool_.get(fd, addr, this, loop);
+	if (add_conn(fd, conn))
+	{
+		loop->update_channel(conn->channel(), listen_loop_->id());
+		//20-11-15
+		//TODO
+		//send login msg to everyone
+		string s{};
+		Message msg = Message::make(move(s), fd);
+		add_msg_to_all(std::move(msg), fd, fd, listen_loop_->id());
+	}
 }
 
 void TcpServer::on_close(int fd, shared_ptr<TcpConnection> conn, int loop_id)
 {
 	debug();
+	//20-11-12
+	//close fd in conn
+	//::close(fd);
 
-	::close(fd);
+	//20-11-15
+	//TODO
+	del_conn(fd);
 	conn_pool_.recycle(conn);
+	Message msg{};
+	add_msg_to_all(move(msg), fd, fd, loop_id);
 }
 
-void TcpServer::on_new_connection(int fd, sockaddr_in addr)
-{
-	debug();
-	//cout<<connfd<<"  "<<maxFd()<<endl;
-	auto loop = select_loop(fd);
-
-	auto conn = conn_pool_.get(fd, addr,
-							   weak_from_this(), weak_ptr<EventLoop>(loop));
-
-	loop->update_channel(conn->channel(), loops_[0]->id());
-}
-
-shared_ptr<EventLoop> TcpServer::select_loop(int connfd)
+EventLoop *TcpServer::select_loop(int connfd)
 {
 	debug();
 
 	if (++loops_index_ >= loops_.size())
 	{
-		loops_index_ = 1;
+		loops_index_ = 1 + LISTEN_LOOP_ID;
 	}
-	return loops_[loops_index_];
+	return loops_[loops_index_].get();
 }
 
-void TcpServer::on_message(int fd, shared_ptr<TcpConnection> conn, int loop_id)
+void TcpServer::on_message(int fd, shared_ptr<TcpConnection> conn, Message msg, int loop_id)
 {
 	debug();
+
 }
 
 void TcpServer::on_write_complete(int fd)
@@ -112,9 +125,4 @@ int TcpServer::max_fd()
 {
 	shared_lock<shared_mutex> rlock(conn_pool_mutex_);
 	return connections_.empty() ? (-1) : (connections_.rbegin()->first);
-}
-
-int TcpServer::fd() const
-{
-	return socket_.fd();
 }

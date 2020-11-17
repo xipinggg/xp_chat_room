@@ -7,7 +7,7 @@
 #include <list>
 #include <memory>
 #include <shared_mutex>
-
+#include <cerrno>
 #include "Types.h"
 #include "xpClass/SpinLock.hpp"
 
@@ -23,27 +23,26 @@ public:
 	Buffer();
 	~Buffer();
 	//conn -> buffer -> fd
-	void add_msg(Message msg);//fd or conn -> buffer
-	ssize_t write_to_fd(int fd);//buffer write to fd
+	//fd or conn -> buffer
+	void add_msg(Message msg);
+	//buffer write to fd
+	ssize_t write_to_fd(int fd);
 
 	//fd -> buffer -> conn
-	Message msg();//buffer -> conn
-	ssize_t read_from_fd(int fd, int num);//fd -> buffer
-
+	//buffer -> conn
+	Message msg();
+	//fd -> buffer
+	ssize_t read_from_fd(int fd, int num);
+	ssize_t read_from_fd(int fd);
+	
 	int msg_num() { return msg_num_; }
 	bool empty() { return msg_num_ == 0; }
 	void clear();
 
-	//ssize_t write(Buf buf, int threadId);
-	//ssize_t read(int fd, size_t num);
-
-	//void reset();
-	//void swap(Buffer &rhs);
-
 private:
-	Message &back_msg() { return messages_.back(); }
-	Message &front_msg() { return messages_.front(); }
-	char *back_msg_data()
+	Message &back_msg_() { return messages_.back(); }
+	Message &front_msg_() { return messages_.front(); }
+	char *back_msg_data_()
 	{
 		char *data = messages_.back().data();
 		return data;
